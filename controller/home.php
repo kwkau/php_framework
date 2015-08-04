@@ -14,6 +14,8 @@ class home extends Controller{
 
     public function index()
     {
+        $this->viewBag["Title"] = "Testing App";
+
         $this->view("Layout");
     }
 }
