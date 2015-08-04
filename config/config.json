@@ -1,0 +1,56 @@
+
+{
+    "server": {
+        "DB_TYPE": "mysql",
+        "HOST_NAME" : "localhost",
+        "DB_USER" : "root",
+        "DB_PASS" : "",
+        "DB_NAME": "ussap",
+        "HOST_URL" : "http://localhost/usap",
+        "DOMAIN_NAME" : "http://localhost/usap",
+        "FORUM_SOCKET_PORT" : 1250,
+        "POST_SOCKET_PORT" : 1260,
+        "NOTI_SOCKET_PORT" : 1270,
+        "CHAT_SOCKET_PORT" : 1280,
+        "STARTUP_SOCKET_PORT" : 1290,
+        "PROFILE_SOCKET_PORT": 1295,
+        "GROUP_FORUM_SOCKET_PORT": 1300,
+        "GROUP_POST_SOCKET_PORT": 1310,
+        "DEPARTMENT_FORUM_SOCKET_PORT": 1320,
+        "DEPARTMENT_POST_SOCKET_PORT": 1330,
+        "TOKEN": "87269",
+        "FLAG_LIMIT":1
+    },
+    "file_paths": {
+        "DEFAULT_PROFILE_PIC": "http://localhost/usap/public/uploads/profile_pics/icon-user-default.png",
+        "UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/stuff/",
+        "UPLOAD_URL" : "http://localhost/usap/public/uploads/stuff/",
+        "PROFILE_PIC_UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/profile_pics/",
+        "POST_PIC_UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/post_pics/",
+        "PROFILE_PIC_UPLOAD_URL" : "http://localhost/usap/public/uploads/profile_pics/",
+        "POST_PIC_UPLOAD_URL" : "http://localhost/usap/public/uploads/post_pics/",
+        "CSS" : "http://localhost/usap/public/css/",
+        "IMAGES" : "http://localhost/usap/public/images/",
+        "JS" : "http://localhost/usap/public/js/"
+
+    },
+    "framework": {
+        "HCMS": false
+    },
+    "error_codes": {
+        "REG_USER_EXIST" : 1,
+        "REG_PASS_EXIST" : 2,
+        "ACCOUNT_LOCK": 6,
+        "REG_FAIL" : 0,
+        "LOGIN_USERNAME_ERR" : 4,
+        "LOGIN_PASSWORD_ERR" : 5,
+        "LOGIN_FAIL" : 3,
+        "DATABASE_ERR" : 100,
+        "SYNTAX_ERROR" : 200,
+        "ERROR_UNKNOWN" : 300,
+        "CONTROLLER_ERROR" : 150,
+        "MODEL_ERROR" :250,
+        "VIEW_ERROR" : 350
+    }
+
+}
