@@ -1,0 +1,11 @@
+
+    <h2>{{status}}</h2>
+    <button ng-click="send()">
+        Send Message
+    </button>
+
+    <div ng-repeat="item in response">
+        <br/>Channel: {{item.channel}}<br/>
+        Data Type: {{item.data_type}}<br/>
+        Payload: {{item.payload|json}}<br/>
+    </div>
