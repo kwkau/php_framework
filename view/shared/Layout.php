@@ -30,7 +30,6 @@
 
 
             <!-- page scripts -->
-            <?=$this->htmlScript('shared.js')?>
             <?=$this->htmlScript('app/app_services.js')?>
             <?=$this->htmlScript('bootstrap.min.js')?>
         </body>

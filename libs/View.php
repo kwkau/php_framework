@@ -1,35 +1,29 @@
 <?php
-/**
- * Class View
- */
+
 class View extends alpha {
 
     public $page ='';
-    public $model;
 
-    /**
-     * Provides access to views
-     */
     function __construct() {
         parent::__construct();
     }
 
-    /*------------------------
-     * view display functions
-     *-----------------------*/
 
     /**
-     * function to fetch the view for a page
-     * @param $page string the name of the page who's view you want to fetch
-     * @param null $layout the name of the layout you want to be rendered with the view
+     * function to render the a view for a controller using the name of the page specified by the constructor of the controller
+     * @param $page string the name of the view to be rendered
+     * @param null $layout the name of the layout to render the view in
+     * @param bool $binding the name of the model you want to bind to the view
      */
-    public function render($page,$layout=null){
-        $file = "view/{$page}/index.php";
+    public function render($page,$layout=null,$binding=false){
+
         $this->page = $page;
+        $file = "view/{$page}/index.php";
         if(!empty($layout)) {
             try
             {
                 //render page with a layout
+
                 if(file_exists($layout_file = "view/shared/{$layout}.php")){
                     require $layout_file;
                 }else{
@@ -51,11 +45,16 @@ class View extends alpha {
                 $this->page_error($page_error,'PAGE_ERROR',$file);
             }
         }
+        if($binding){
 
-
+        }
 
     }
 
+    /**
+     * function to call shared layout files from the layout folder
+     * @param $file string the name of the file
+     */
     public function shared($file){
         if(is_dir($file) && file_exists($file)){
             require $file;
@@ -73,10 +72,13 @@ class View extends alpha {
         }
     }
 
-    public function layout_body($body_page){
+    /**
+     * function to display the main content in our layout file
+     */
+    public function layout_body(){
+        $body_file = "view/{$this->page}/index.php";
         try
         {
-            $body_file = "view/{$body_page}/index.php";
             if(file_exists($body_file)){
                 require $body_file;
             }else{
@@ -86,8 +88,9 @@ class View extends alpha {
             $this->page_error($page_error,'PAGE_ERROR',$body_file);
         }
     }
-
+    
     public function display_uniq($page){
+
         try
         {
             $file = "view/{$page}";
@@ -128,7 +131,7 @@ class View extends alpha {
         return $prps;
     }
 
-    public function htmlAnchor($controller, $link_name, $action_method = null, $param = null) {
+    public function htmlAnchor($controller, $link_name, $action_method = null, $param = null,$text=null) {
         //we will need to come up with a way to identify the domain name automatically
         if (is_null($param) && is_null($action_method)) {
             $href = "{$controller}";
@@ -138,32 +141,34 @@ class View extends alpha {
             $href = "{$controller}/{$action_method}/{$param}";
         }
 
-        return "<a href=\"" . DOMAIN_NAME . "/{$href}\">{$link_name}</a>";
+        return "<a href=\"" . DOMAIN_NAME . "{$href}\">{$link_name}{$text}</a>";
     }
 
     public function htmlIMG($imgPath, $class=array(), $alt = null) {
-        return "<img class = \"".join(" ",$class)."\" src=\" " . IMAGES . $imgPath . " \" alt= \"{$alt}\"/> \n";
+        return "<img class = \"".join(" ",$class)."\" src=\" " . DOMAIN_NAME. IMAGES . $imgPath . " \" alt= \"{$alt}\"/> \n";
     }
 
+    /**
+     * function to create a link tag to reference the specified file in your html
+     * @param $filename string the name of the css file
+     * @param null $rel
+     */
     public function htmlLink ($filename,$rel=null) {
-        $file_dir = CSS."$filename";
-        return "<link rel =\"{$rel}\" type=\"text/css\" href=\"{$file_dir}\" media=\"screen\" /> \n";
+        $file_dir = DOMAIN_NAME.CSS."$filename";
+        echo "<link rel =\"{$rel}\" type=\"text/css\" href=\"{$file_dir}\" media=\"screen\" /> \n";
     }
 
 
+    /**
+     * function to generate a script tag to call the specified script file
+     * @param $filename string the name of the script file
+     * @param null $type
+     */
     public function htmlScript($filename,$type=null){
-        $type = !empty($type)? $type:'text/javascript';
-        $file_dir = JS."$filename";
-        return "<script type=\"{$type}\" src=\"{$file_dir}\"></script>\n";
+        $file_dir = DOMAIN_NAME.JS."$filename";
+        echo "<script type=\"{$type}\" src=\"{$file_dir}\"></script>\n";
     }
 
-
-    public function htmlForm(htmlPrps $htmlprps,$fields){
-
-        /*$model = new RedBean_SimpleModel();
-        $model_properties = $this->inspector->getClassProperties($model);*/
-
-    }
 
 
     /**
@@ -186,7 +191,7 @@ class View extends alpha {
 
 
     /**
-     * this function will display data stored in the variable passed to it in an appropriate
+     * @description this function will display data stored in the variable passed to it in an appropriate
      * html form element, depending on what kind of data is stored in it
      * @param $entity
      * @param null $name
@@ -206,8 +211,10 @@ class View extends alpha {
 
 
 
-    function year($start,$end){
-        for ($x = $start; $x <= $end; $x++){
+    function year(){
+        echo "<option value=\"\" >Birth</option>";
+        echo "<option value=\"\" >Year</option>";
+        for ($x = 1950; $x <= 1998; $x++){
             echo "<option value=$x>$x</option>";
         }
     }
@@ -215,6 +222,7 @@ class View extends alpha {
     function month(){
         $month = array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
         $i = 0;
+        echo "<option value=\"\" >Of</option>";
         echo "<option value=\"\" >Month</option>";
         for ($y = 0; $y < 12; $y++) {
             echo '<option value="'.++$i.'">'.$month[$y].'</option>';
@@ -222,37 +230,11 @@ class View extends alpha {
     }
 
     function day() {
+        echo "<option value=\"\" >Date</option>";
         echo "<option value=\"\" >Day</option>";
         for ($x = 1; $x <= 31; $x++) {
             echo "<option value=$x>$x</option>";
         }
     }
 
-
-    /*---------------------------
-     * hcms data fetch functions
-     *--------------------------*/
-
-    /**
-     * function to fetch the content of main or sub page containers
-     * @param $mainContainerTag string  the name of the main container
-     * @param $mcContentType string  the type of data that the main container holds(text or picture or video)
-     * @param null $scContentType string  the type of data that the sub container holds(text or picture or video),
-     * if this parameter is null then sub containers will not be fetched but if it is not null then sub containers will
-     * be fetched along with its main containers
-     * @return array returns a array of data which are the contents of the main container and its sub container if present
-     */
-    public function container_fetch($mainContainerTag,$mcContentType,$scContentType = null) {
-
-        if(!empty($scContentType)){
-            /*fetch both a main container together with its sub containers*/
-            return $this->model->main_sub_fetch($mainContainerTag, $mcContentType, $scContentType, $this->page);
-        } else {
-
-            return $this->model->singular_fetch($mainContainerTag,$mcContentType,$this->page);
-        }
-
-    }
-
 }
-

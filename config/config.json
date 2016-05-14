@@ -1,47 +1,31 @@
-
 {
     "server": {
-        "DB_TYPE": "mysql",
+        "DB_TYPE":"mysql",
         "HOST_NAME" : "localhost",
         "DB_USER" : "root",
         "DB_PASS" : "",
-        "DB_NAME": "ussap",
-        "HOST_URL" : "http://localhost/usap",
-        "DOMAIN_NAME" : "http://localhost/usap",
-        "FORUM_SOCKET_PORT" : 1250,
-        "POST_SOCKET_PORT" : 1260,
-        "NOTI_SOCKET_PORT" : 1270,
-        "CHAT_SOCKET_PORT" : 1280,
-        "STARTUP_SOCKET_PORT" : 1290,
-        "PROFILE_SOCKET_PORT": 1295,
-        "GROUP_FORUM_SOCKET_PORT": 1300,
-        "GROUP_POST_SOCKET_PORT": 1310,
-        "DEPARTMENT_FORUM_SOCKET_PORT": 1320,
-        "DEPARTMENT_POST_SOCKET_PORT": 1330,
-        "TOKEN": "87269",
-        "FLAG_LIMIT":1
+        "DB_NAME":"hbcmis",
+        "HOST_URL" : "http://localhost/agile",
+        "DOMAIN_NAME" : "http://localhost/agile",
+        "DIGEST":"9015432640eb37b1f1343ef387cd3e89d6dbc48b38a1e3a9e5fb8d2543ef770207afcd50063900de672a96d9f45129ab8fc7d91f9267bb8178bda1b400a6688f",
+        "ADMIN_EMAIL":"admin@gmail.com",
+        "PORT": 1250,
+        "ENCRYPT" : false
     },
     "file_paths": {
-        "DEFAULT_PROFILE_PIC": "http://localhost/usap/public/uploads/profile_pics/icon-user-default.png",
-        "UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/stuff/",
-        "UPLOAD_URL" : "http://localhost/usap/public/uploads/stuff/",
-        "PROFILE_PIC_UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/profile_pics/",
-        "POST_PIC_UPLOAD_DIR" : "C:/wamp/www/usap/public/uploads/post_pics/",
-        "PROFILE_PIC_UPLOAD_URL" : "http://localhost/usap/public/uploads/profile_pics/",
-        "POST_PIC_UPLOAD_URL" : "http://localhost/usap/public/uploads/post_pics/",
-        "CSS" : "http://localhost/usap/public/css/",
-        "IMAGES" : "http://localhost/usap/public/images/",
-        "JS" : "http://localhost/usap/public/js/"
-
+        "UPLOAD_DIR" : "C:laragon/www/hbcmisup/public/uploads/",
+        "UPLOAD_URL" : "public/uploads/",
+        "CSS" : "public/css/",
+        "IMAGES" : "public/images/",
+        "JS" : "public/js/"
     },
     "framework": {
-        "HCMS": false
+        "DEFAULTY":"266165385586C882C9DED3D8517E18C7"
     },
     "error_codes": {
         "REG_USER_EXIST" : 1,
         "REG_PASS_EXIST" : 2,
-        "ACCOUNT_LOCK": 6,
-        "REG_FAIL" : 0,
+        "ACCOUNT_LOCK" : 0,
         "LOGIN_USERNAME_ERR" : 4,
         "LOGIN_PASSWORD_ERR" : 5,
         "LOGIN_FAIL" : 3,
@@ -50,7 +34,10 @@
         "ERROR_UNKNOWN" : 300,
         "CONTROLLER_ERROR" : 150,
         "MODEL_ERROR" :250,
-        "VIEW_ERROR" : 350
+        "VIEW_ERROR" : 350,
+        "ADMIN_PRIV": 1,
+        "USER_PRIV": 0,
+        "BRANCH_LEADER_PRIV": 2
     }
 
 }

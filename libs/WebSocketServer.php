@@ -1,111 +1,215 @@
 <?php
 
-abstract class WebSocketServer extends alpha{
+abstract class WebSocketServer extends alpha implements IWebsocketInterface{
 
-    protected $userClass = 'Socket'; // redefine this if you want a custom user class.
+
+    /**
+     * @var WebSocket $WebSocket
+     */
+    protected $WebSocket = 'WebSocket'; // redefine this if you want a custom user class.
     protected $maxBufferSize;
     protected $master;
     protected $sockets                              = array();
-    protected $users                                = array();
+    protected $websockets                           = array();
     protected $interactive                          = true;
     protected $headerOriginRequired                 = false;
     protected $headerSecWebSocketProtocolRequired   = false;
     protected $headerSecWebSocketExtensionsRequired = false;
-    public  $stop = false;//our way of stopping the server
+    public static $stop = false;//our way of stopping the server
+    public static $pause = false;//our way of pausing the server
+    public static $server_instances = array();
 
     function __construct($addr, $port, $bufferLength = 2048) {
 
         $this->maxBufferSize = $bufferLength;
+
+        /*--------------------------------------------------------------------
+         * create our main master socket. this socket will be the main socket
+         * on which we will bind our url and port number to
+         *------------------------------------------------*/
         $this->master = socket_create(AF_INET, SOCK_STREAM, SOL_TCP)  or die("Failed: socket_create()");
+
+        /*-----------------------------------
+         * set options for our master socket
+         *---------------------------------*/
         socket_set_option($this->master, SOL_SOCKET, SO_REUSEADDR, 1) or die("Failed: socket_option()");
-        socket_bind($this->master, $addr, $port)                      or die("Failed: socket_bind()");
-        socket_listen($this->master,SOMAXCONN)                        or die("Failed: socket_listen()");
+
+        /*------------------------------------------------------------
+         * bind the master socket to the url and port number provided
+         *----------------------------------------------------------*/
+        socket_bind($this->master, $addr, $port) or die("Failed: socket_bind()");
+
+        /*----------------------------------------------
+         * listen for a connection on the master socket
+         *--------------------------------------------*/
+        socket_listen($this->master,SOMAXCONN) or die("Failed: socket_listen()");
+
+        /*----------------------------------------------
+         * cache the master socket in the sockets array
+         *--------------------------------------------*/
         $this->sockets['m'] = $this->master;
-//        $this->stdout("Server started\nListening on: $addr:$port\nMaster socket: ".$this->master);
 
+        $this->stdout("Server started\nListening on: $addr:$port\nMaster socket: ".$this->master);
+
+        //cache the server instance for future use
+        self::$server_instances[] = $this;
     }
 
-    abstract protected function process(Socket $user,$message); // Called immediately when the data is received.
-    abstract protected function connected(Socket $sckt,$message);        // Called after the handshake response is sent to the client.
-    abstract protected function closed(Socket $sckt);           // Called after the connection is closed.
 
-    protected function connecting(Socket $user) {
-        // Override to handle a connecting user, after the instance of the User is created, but before
-        // the handshake has completed.
+    /**
+     * send data to the specified socket
+     * @param WebSocket $websocket the websocket to send data to
+     * @param $message mixed the data you want to send
+     * @return int
+     */
+    protected function send(WebSocket $websocket,$message) {
+        $message = $this->frame($message,$websocket);
+        return $this->soc_write($websocket->socket, $message);
     }
 
-    protected function send(Socket $user,$message) {
-        $message = $this->frame($message,$user);
-        return @socket_write($user->socket, $message, strlen($message));
+
+    /**
+     * write data to the socket that is provided. data will continuously be
+     * written to the socket until it is successfully sent
+     * @param $socket Object the socket resource we want to write data to
+     * @param $message mixed the data we want to write
+     * @return int the number of bytes that have been successfully written
+     * to the websocket
+     */
+    public function soc_write($socket, $message){
+        while(!$bytes = @socket_write($socket, $message, strlen($message))){
+            if($bytes = @socket_write($socket, $message, strlen($message))){
+                break;
+            }
+        }
+        return $bytes;
     }
 
     /**
-     * Main processing loop
+     * stop the WebSocket server
+     * @return WebSocketServer
      */
+    public static function stop(){
+        self::$stop = true;
+        set_time_limit(1);
+        return WebSocketServer::class;
+    }
+
+    private function generate_security_token()
+    {
+        $rsa = new RSA();
+        $keys = $rsa->createKey();
+        session::set("ws_token",$keys["publickey"]);
+        session::set("ws_private_key",$keys["privatekey"]);
+    }
+
+    /**
+     * start all WebSocket server instances
+     */
+    public static function start(){
+        self::$stop = false;
+        set_time_limit(0);
+        foreach (self::$server_instances as $server) {
+            $server->run();
+        }
+    }
+
+    /**
+     * restart all instances of the WebSocket
+     */
+    public static function restart()
+    {
+        self::$stop = false;
+        set_time_limit(0);
+        foreach (self::$server_instances as $server) {
+            $server->run();
+        }
+    }
+
+    public static function pause(){
+        self::$pause = true;
+    }
+
+    public static function resume()
+    {
+        self::$pause = false;
+    }
+
+    /*----------------------
+     * Main processing loop
+     *--------------------*/
     public function run() {
-        while(!$this->stop) {
-            if (empty($this->sockets)) {
-                $this->sockets['m'] = $this->master;
-            }
-            $read = $this->sockets;
-            $write = $except = null;
-            @socket_select($read,$write,$except,null);
-            foreach ($read as $socket) {
-                if ($socket == $this->master) {
-                    $client = socket_accept($socket);
-                    if ($client < 0) {
-                        $this->stderr("Failed: socket_accept()");
-                        continue;
-                    }
-                    else {
-                        $this->connect($client);
-                        $this->stdout("Client connected. " . $client);
-                    }
+        $this->generate_security_token();
+        while(!self::$stop) {
+            if(!self::$pause){
+                if (empty($this->sockets)) {
+                    $this->sockets['m'] = $this->master;
                 }
-                else {
-                    $numBytes = @socket_recv($socket,$buffer,$this->maxBufferSize,0);
-                    if ($numBytes === false) {
-                        throw new Exception('Socket error: ' . socket_strerror(socket_last_error($socket)));
-                    }
-                    elseif ($numBytes == 0) {
-                        $this->disconnect($socket);
-                        $this->stdout("Client disconnected. TCP connection lost: " . $socket);
-                    }
-                    else {
-                        $user = $this->getUserBySocket($socket);
-                        if (!$user->handshake) {
-                            $tmp = str_replace("\r", '', $buffer);
-                            if (strpos($tmp, "\n\n") === false ) {
-                                continue; // If the client has not finished sending the header, then wait before sending our upgrade response.
-                            }
-                            $this->doHandshake($user,$buffer);
+                $read = $this->sockets;
+                $write = $except = null;
+
+                /*------------------------------------
+                 * set watches for all cached sockets
+                 *----------------------------------*/
+                @socket_select($read,$write,$except,null);
+
+                foreach ($read as $socket) {
+                    if ($socket == $this->master) {
+                        $client = socket_accept($socket);
+                        if ($client < 0) {
+                            $this->stderr("Failed: socket_accept()");
+                            continue;
                         }
                         else {
-                            if (($message = $this->deframe($buffer, $user)) !== FALSE) {
-                                if($user->hasSentClose) {
-                                    $this->disconnect($user->socket);
-                                    $this->stdout("Client disconnected. Sent close: " . $socket);
+                            $this->connect($client);
+                            $this->stdout("Client connected. " . $client);
+                        }
+                    }
+                    else {
+                        $numBytes = @socket_recv($socket,$buffer,$this->maxBufferSize,0);
+                        if ($numBytes === false) {
+                            throw new Exception('Socket error: ' . socket_strerror(socket_last_error($socket)));
+                        }
+                        elseif ($numBytes == 0) {
+                            $this->disconnect($socket);
+                            $this->stdout("Client disconnected. TCP connection lost: " . $socket);
+                        }
+                        else {
+                            $user = $this->getWebSocketBySocket($socket);
+                            if (!$user->handshake) {
+                                $tmp = str_replace("\r", '', $buffer);
+                                if (strpos($tmp, "\n\n") === false ) {
+                                    continue; // If the client has not finished sending the header, then wait before sending our upgrade response.
                                 }
-                                else {
-                                    $this->process($user, $message); // todo: Re-check this.  Should already be UTF-8.
-                                }
+                                $this->doHandshake($user,$buffer);
                             }
                             else {
-                                do {
-                                    $numByte = @socket_recv($socket,$buffer,$this->maxBufferSize,MSG_PEEK);
-                                    if ($numByte > 0) {
-                                        $numByte = @socket_recv($socket,$buffer,$this->maxBufferSize,0);
-                                        if (($message = $this->deframe($buffer, $user)) !== FALSE) {
-                                            if($user->hasSentClose) {
-                                                $this->disconnect($user->socket);
-                                                $this->stdout("Client disconnected. Sent close: " . $socket);
-                                            }
-                                            else {
-                                                $this->process($user,$message);
+                                if (($message = $this->deframe($buffer, $user)) !== FALSE) {
+                                    if($user->hasSentClose) {
+                                        $this->disconnect($user->socket);
+                                        $this->stdout("Client disconnected. Sent close: " . $socket);
+                                    }
+                                    else {
+                                        $this->process($user, $message); // todo: Re-check this.  Should already be UTF-8.
+                                    }
+                                }
+                                else {
+                                    do {
+                                        $numByte = @socket_recv($socket,$buffer,$this->maxBufferSize,MSG_PEEK);
+                                        if ($numByte > 0) {
+                                            $numByte = @socket_recv($socket,$buffer,$this->maxBufferSize,0);
+                                            if (($message = $this->deframe($buffer, $user)) !== FALSE) {
+                                                if($user->hasSentClose) {
+                                                    $this->disconnect($user->socket);
+                                                    $this->stdout("Client disconnected. Sent close: " . $socket);
+                                                }
+                                                else {
+                                                    $this->process($user,$message);
+                                                }
                                             }
                                         }
-                                    }
-                                } while($numByte > 0);
+                                    } while($numByte > 0);
+                                }
                             }
                         }
                     }
@@ -115,31 +219,35 @@ abstract class WebSocketServer extends alpha{
     }
 
     protected function connect($socket) {
-        $user = new $this->userClass(uniqid('u',true), $socket);
-        $this->users[$user->id] = $user;
-        $this->sockets[$user->id] = $socket;
-        $this->connecting($user);
+        /*-------------------------------------------------------
+         * generate a unique id for the socket trying to connect
+         * and create a new user instance for the socket
+         *-----------------------------------------------------*/
+        $websocket = new $this->WebSocket(uniqid('u',true), $socket);
+        $this->websockets[$websocket->id] = $websocket;
+        $this->sockets[$websocket->id] = $socket;
+        $this->connecting($websocket);
     }
 
     protected function disconnect($socket, $triggerClosed = true) {
-        $disconnectedUser = $this->getUserBySocket($socket);
+        $disconnectedWebSocket = $this->getWebSocketBySocket($socket);
+        if ($disconnectedWebSocket !== null) {
+            unset($this->websockets[$disconnectedWebSocket->id]);
 
-        if ($disconnectedUser !== null) {
-            unset($this->users[$disconnectedUser->id]);
-
-            if (array_key_exists($disconnectedUser->id, $this->sockets)) {
-                unset($this->sockets[$disconnectedUser->id]);
+            if (array_key_exists($disconnectedWebSocket->id, $this->sockets)) {
+                unset($this->sockets[$disconnectedWebSocket->id]);
             }
 
             if ($triggerClosed) {
-                $this->closed($disconnectedUser);
-                socket_close($disconnectedUser->socket);
+                $this->closed($disconnectedWebSocket);
+                socket_close($disconnectedWebSocket->socket);
             }
             else {
-                $message = $this->frame('', $disconnectedUser, 'close');
-                @socket_write($disconnectedUser->socket, $message, strlen($message));
+                $message = $this->frame('', $disconnectedWebSocket, 'close');
+                $this->soc_write($disconnectedWebSocket->socket, $message);
             }
         }
+        $this->closed($disconnectedWebSocket);
     }
 
     protected function doHandshake($user, $buffer) {
@@ -222,7 +330,7 @@ abstract class WebSocketServer extends alpha{
         if (($message = $this->deframe($con_msg, $user)) !== FALSE) {
             if($user->hasSentClose) {
                 $this->disconnect($user->socket);
-                $this->stdout("Client disconnected. Sent close: " . $socket);
+                $this->stdout("Client disconnected. Sent close: " . $user->socket);
             }
         }
         $this->connected($user,$message);
@@ -259,15 +367,15 @@ abstract class WebSocketServer extends alpha{
 
     /**
      * @param $socket
-     * @return Socket
+     * @return WebSocket
      */
-    protected function getUserBySocket($socket) {
-        foreach ($this->users as $user) {
-            if ($user->socket == $socket) {
-                return $user;
+    protected function getWebSocketBySocket($socket) {
+        foreach ($this->websockets as $websocket) {
+            if ($websocket->socket == $socket) {
+                return $websocket;
             }
         }
-        return null;
+        return false;
     }
 
     public function stdout($message) {
@@ -282,6 +390,13 @@ abstract class WebSocketServer extends alpha{
         }
     }
 
+    /**
+     * @param $message
+     * @param $user
+     * @param string $messageType
+     * @param bool $messageContinues
+     * @return string
+     */
     protected function frame($message, $user, $messageType='text', $messageContinues=false) {
         switch ($messageType) {
             case 'continuous':

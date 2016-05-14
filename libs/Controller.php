@@ -1,17 +1,15 @@
 <?php
-/*
- * we will need to create a way to connect our websockets to our controllers
- * so that our controllers can be used to create and accept connections on our
- * websockets. how the heck do we achieve that
- */
 
 /**
  * Class Controller
  * <p>Enables your class to function as a Controller in this framework</p>
  */
 class Controller extends alpha{
-    private $cntrl_mdl;
     private $page = '';
+    /**
+     * @var Model $api_mdl
+     * */
+    private  $api_mdl;
 
     /**
      * Turns your class into a controller to allow it call views and perform other controller functions
@@ -19,20 +17,11 @@ class Controller extends alpha{
      */
     function __construct($controller_name){
         parent::__construct();
-        $this->ini($controller_name);
+        $this->page = $pageName = $controller_name;
+        $this->api_mdl = $controller_name;
         $this->session = new session('_k&a',false);
         $this->view = new View;
-        $this->upload = new upload_engine;
         $this->model = !empty($controller_name)? $this->load_model($controller_name):null;
-    }
-
-    /**
-     * function to initialize the controller upon startup
-     * @param $pageName string the name of the controller which is also the name of the page
-     */
-    private function ini($pageName){
-        $this->cntrl_mdl = $this->load_model("Controller");
-        $this->page = $pageName;
     }
 
 
@@ -47,8 +36,15 @@ class Controller extends alpha{
         $this->view->model = !empty($model) ? $model:null;
         //display a view with or without a layout
         $this->view->render($this->page,$layout);
+        return;
     }
 
+    /**
+     * function to render a specific view by providing its name
+     * @param $name string the name of the view you want to display
+     * @param null|string $layout the name of the layout you want the view to be displayed with
+     * @param null|Object $model the model that you want to strongly bind to the view you are calling
+     */
     public function select($name,$layout=null,$model=null)
     {
         //strongly bind a view to a model object
@@ -78,7 +74,7 @@ class Controller extends alpha{
             }
         }catch (LoadModelException $model_load_err)
         {
-            $this->controller_error_log($model_load_err,$name,'MODEL_LOAD_ERROR');
+            //Todo: model log error
         }
         if ($etc)
         {
@@ -105,19 +101,6 @@ class Controller extends alpha{
         }
     }
 
-    /**
-     * this is an html helper function to validate a form
-     * @param array $formArray
-     * @return bool returns true if the form does not have any errors or problems and false otherwise
-     */
-    public function form_validation($formArray){
-        foreach ($formArray as $field){
-            if (empty($field)) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * function to redirect urls using routes. if no parameters are provided you
@@ -148,6 +131,41 @@ class Controller extends alpha{
     public function server_dat (){
         print_r($_REQUEST);
     }
+
+    /*-----------------------------
+     * api default CRUD functions
+     *---------------------------*/
+
+    public function add(Request $request)
+    {
+        $model = new $this->api_mdl;
+        Response::json($model->populate($request->json_content())->insert(true));
+    }
+
+    public function get(Request $request)
+    {
+        $model = new $this->api_mdl;
+        Response::json($model->get($request->input("id")));
+    }
+
+    public function lyst(Request $request)
+    {
+        $model = new $this->api_mdl;
+        Response::json($model->getAll());
+    }
+
+    public function update(Request $request)
+    {
+        $model = new $this->api_mdl;
+        Response::json($model->populate($request->json_content())->update());
+    }
+
+    public function delete(Request $request)
+    {
+        $model = new $this->api_mdl;
+        Response::json($model->get($request->input("id"))->delete());
+    }
+
 
 }
 

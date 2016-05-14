@@ -107,7 +107,7 @@ class UploadHandler
                     'jpeg_quality' => 80
                 ),
                 */
-                'thumbnail' => array(
+                /*'thumbnail' => array(
                     // Uncomment the following to use a defined directory for the thumbnails
                     // instead of a subdirectory based on the version identifier.
                     // Make sure that this directory doesn't allow execution of files if you
@@ -117,10 +117,10 @@ class UploadHandler
                     //'upload_url' => $this->get_full_url().'/thumb/',
                     // Uncomment the following to force the max
                     // dimensions and e.g. create square thumbnails:
-                    'crop' => true,
+                    //'crop' => true,
                     'max_width' => 80,
                     'max_height' => 80
-                )
+                )*/
             )
         );
         if ($options) {

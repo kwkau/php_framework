@@ -1,5 +1,4 @@
 <?php
-
 class frameWork{
     private $frameWork_vals= array();
     public function __construct(){
@@ -18,13 +17,9 @@ class frameWork{
     }
 
     private function set_constants () {
-        defined('HCMS') ? null : define('HCMS', $this->frameWork_vals['HCMS']);
-        /*defined('HOST_NAME') ? null : define('HOST_NAME', $this->frameWork_vals['HOST_NAME']);
-        defined('DB_USER') ? null : define('DB_USER', $this->frameWork_vals['DB_USER']);
-        defined('DB_PASS') ? null : define('DB_PASS', $this->frameWork_vals['DB_PASS']);
-        defined('DB_NAME') ? null : define('DB_NAME', $this->frameWork_vals['DB_NAME']);
-        defined('HOST_URL') ? null : define('HOST_URL', $this->frameWork_vals['HOST_URL']);
-        defined('DOMAIN_NAME') ? null : define('DOMAIN_NAME', $this->frameWork_vals['DOMAIN_NAME']);*/
+        foreach ($this->frameWork_vals as $key => $val) {
+            defined($key) ? null : define($key, $val);
+        }
     }
 
 

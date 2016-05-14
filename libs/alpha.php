@@ -4,10 +4,12 @@ class alpha implements IErrorReport{
 
     private static $viewBagVar = array();
     private $alpha_model;
-    private $key = "9015432640eb37b1f1343ef387cd3e89d6dbc48b38a1e3a9e5fb8d2543ef770207afcd50063900de672a96d9f45129ab8fc7d91f9267bb8178bda1b400a6688f";
+    private static $key;
     public function __construct(){
+        self::set_key();
         $this->dt = new date_time();
-        $this->alpha_model = new alpha_mdl();
+        /*
+        $this->alpha_model = new alpha_mdl();*/
         //creating an alias for our static viewBag variable
         $this->viewBag = &self::$viewBagVar;
     }
@@ -15,8 +17,8 @@ class alpha implements IErrorReport{
 
     /**
      * function to generates a hash value from the data provided
-     * @param $data string the data you want to hash
-     * @return string the hashed string from the data provided
+     * @param $data
+     * @return string
      */
     public function hash($data){
        return hash("sha512",$data);
@@ -57,11 +59,11 @@ class alpha implements IErrorReport{
      * @var $pure_string string the string to encrypt
      * @return string cipher text
      */
-    function encrypt($pure_string) {
-        $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
-        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-        $encrypted_string = mcrypt_encrypt(MCRYPT_BLOWFISH, $this->key, utf8_encode($pure_string), MCRYPT_MODE_ECB, $iv);
-        return $encrypted_string;
+    function aes_encrypt($pure_string) {
+        self::set_key();
+        $aes = new AES();
+        $aes->setKey(self::$key);
+        return $aes->encrypt($pure_string);
     }
 
     /**
@@ -69,11 +71,17 @@ class alpha implements IErrorReport{
      * @var $encrypted_string string the string to decrypt
      * @return string plain text
      */
-    function decrypt($encrypted_string) {
-        $iv_size = mcrypt_get_iv_size(MCRYPT_BLOWFISH, MCRYPT_MODE_ECB);
-        $iv = mcrypt_create_iv($iv_size, MCRYPT_RAND);
-        $decrypted_string = mcrypt_decrypt(MCRYPT_BLOWFISH, $this->key, $encrypted_string, MCRYPT_MODE_ECB, $iv);
-        return $decrypted_string;
+    function aes_decrypt($encrypted_string) {
+        self::set_key();
+        $aes = new AES();
+        $aes->setKey(self::$key);
+        return $aes->decrypt($encrypted_string);
+    }
+
+    private function set_key()
+    {
+        $salt = 'cH!swe!retReGu7W6bEDRuk7usuDUh9THeD2CHeGE*ewr4n39=E@rAsp7c-Ph@pH';
+        self::$key = substr(self::hash($salt.DIGEST.$salt), 0, 32);
     }
 
 } 

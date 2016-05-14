@@ -12,7 +12,7 @@ public function __construct(){
 
     private function load_config(){
         try{
-            $config_json = fread(fopen( __DIR__.'/config.json','r'),4*1024);
+            $config_json = fread(fopen(__DIR__.'\config.json','r'),4*1024);
         }catch (Exception $ex){
             die("We are very sorry for the inconvenience caused but we are having problems with our server, please try again later");
         }
