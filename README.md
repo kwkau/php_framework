@@ -87,11 +87,13 @@ class RouteFactory {
   
   now your REST API controller is ready to respond to REST API calls and also perform CRUD operations with the data it receives from those calls;
   
-  #connecting to database
-  currently agile has support only for mysql and postgres, looking to add support for MSSQL. to connect to database you will need to provide these details in the config.json file which you in the config folder, DB_TYPE, HOST_NAME, DB_USER, DB_PASSWORD and 
   
-  #example
-  "server": {
+#connecting to a database
+currently agile has support only for mysql and postgres, looking to add support for MSSQL. to connect to database you will need to provide these details in the config.json file which you in the config folder, DB_TYPE, HOST_NAME, DB_USER, DB_PASSWORD and DB_NAME
+  
+  
+#example
+"server": {
   
         "DB_TYPE":"mysql",
         
