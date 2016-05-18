@@ -1,6 +1,6 @@
 # agile php_framework
 
-this is a php framework i created whiles working on project work for final year. i took a lot of inspiration from asp.net mvc 4.0  and also from laravel and as such you will find a lot of structures and builds similar to the frame works mentioned above. agile fully supports MVC architecture.
+this is a php framework i created whiles working on my project work for my final year in uni. i took a lot of inspiration from asp.net mvc 4.0  and also from laravel and as such you will find a lot of structures and builds similar to the frame works mentioned above. agile fully supports MVC architecture.
 
 i added a few other things also such as support for websockets and a mini ORM which has support for relations between table.
 
@@ -31,7 +31,7 @@ class items extends Controller{
 ?> 
 
 # default api CRUD functions
-agile presents you will pre written CRUD API functions for REST API meaning you dnt need to write over and over again code to insert, update or delete data in your database its already done; all you have to do is create your rest api controllers then you point your routes to them and the Controller base class that your REST API controller inherits from takes care of the rest
+agile presents you will pre written CRUD API functions for REST API meaning you don't need to write over and over again code to insert, update or delete data in your database its already done; all you have to do is create your rest api controllers then you point your routes to them and the Controller base class that your REST API controller inherits from takes care of the rest
 
 #example
 
