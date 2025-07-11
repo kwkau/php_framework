@@ -14,11 +14,15 @@ class database extends PDO {
             //parent::__construct(mysql:host = localhost;dbname = sswap,root,"");
             try {
                 @parent :: __construct(DB_TYPE . ":host=" . HOST_NAME . ";dbname=" . DB_NAME, DB_USER, DB_PASS,array(
-                    PDO::ATTR_PERSISTENT => true
+                    PDO::ATTR_PERSISTENT => true,
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
                 ));
             } catch (PDOException $error) {
-
-                die('Oops we seem to be experiencing some technical difficulties, please forgive us and try again later <br/> '. $error->getMessage() . '<br/>');
+                // Log the actual error for debugging
+                error_log("Database connection failed: " . $error->getMessage());
+                
+                // Show generic error to user - don't expose database details
+                die('We are sorry for the inconvenience caused but we are having problems with our server, please try again later.');
             }
     }
 
