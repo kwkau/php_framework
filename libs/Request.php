@@ -109,9 +109,10 @@ class Request{
      *
      * @param $key string the key of the value being searched, this key must be the same as the key value stated in the data
      * that was sent along with the request
+     * @param $sanitize bool whether to sanitize the input (default: true)
      * @return bool|mixed returns the corresponding value for key specified
      */
-    public function input($key)
+    public function input($key, $sanitize = true)
     {
         $json_val = false;
         //check if the request has json data of form data
@@ -123,17 +124,56 @@ class Request{
         if(!$json_val){
             switch($this->get_method()){
                 case "GET":
-                    return $_GET[$key];
+                    $value = isset($_GET[$key]) ? $_GET[$key] : false;
                     break;
                 case "POST":
-                    return filter_input(INPUT_POST,$key);
+                    $value = filter_input(INPUT_POST, $key);
                     break;
                 default:
-                    return $_GET[$key];
+                    $value = isset($_GET[$key]) ? $_GET[$key] : false;
                     break;
             }
+        } else {
+            $value = $json_val;
         }
-        return $json_val;
+        
+        // Sanitize input if requested
+        if ($sanitize && $value !== false) {
+            $value = $this->sanitizeInput($value);
+        }
+        
+        return $value;
+    }
+    
+    /**
+     * Sanitize input to prevent XSS and other attacks
+     * @param mixed $input
+     * @return mixed
+     */
+    private function sanitizeInput($input) {
+        if (is_array($input)) {
+            return array_map([$this, 'sanitizeInput'], $input);
+        }
+        
+        if (is_string($input)) {
+            // Remove null bytes
+            $input = str_replace("\0", '', $input);
+            // HTML encode special characters
+            $input = htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+            // Remove excessive whitespace
+            $input = trim($input);
+        }
+        
+        return $input;
+    }
+    
+    /**
+     * Get raw unsanitized input (use with caution)
+     * @param string $key
+     * @return mixed
+     */
+    public function raw_input($key) {
+        return $this->input($key, false);
     }
 
     /**

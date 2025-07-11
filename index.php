@@ -1,6 +1,14 @@
 <?php
 
 function loadSSWAP($class){
+    // Validate class name to prevent directory traversal
+    if (!preg_match('/^[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*$/', $class)) {
+        return false;
+    }
+    
+    // Remove any potential path traversal characters
+    $class = preg_replace('/[^a-zA-Z0-9_]/', '', $class);
+    
     $pathControllers = "controller/{$class}.php";
     $pathLibs = "libs/{$class}.php";
     $pathModels = "model/{$class}.php";
@@ -9,6 +17,7 @@ function loadSSWAP($class){
     $pathConfig = "config/{$class}.php";
     $websockets = "websockets/{$class}.php";
 
+    // Check if file exists before including to prevent errors
     if (file_exists($websockets)) {
         require_once $websockets;
     }elseif (file_exists($pathControllers)) {

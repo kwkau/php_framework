@@ -436,7 +436,7 @@ class Model extends alpha
     public function populate($data,$exclude=array("default"))
     {
         $exclude = array_flip($exclude);
-        $data = is_array($data)?$data:is_object($data)?(Array)$data:null;
+        $data = is_array($data) ? $data : (is_object($data) ? (Array)$data : null);
         foreach ($data as $key => $val) {
             if(!array_key_exists($key, $exclude)){
                 if(is_array($val)){
@@ -687,6 +687,26 @@ class Model extends alpha
         }
         return false;
     }
+    
+    /**
+     * Validate column name to prevent SQL injection
+     * @param string $column
+     * @return bool
+     */
+    private function validateColumnName($column) {
+        // Allow only alphanumeric characters and underscore
+        return preg_match('/^[a-zA-Z_][a-zA-Z0-9_]*$/', $column);
+    }
+    
+    /**
+     * Validate SQL operation to prevent SQL injection
+     * @param string $operation
+     * @return bool
+     */
+    private function validateOperation($operation) {
+        $allowedOperations = ['=', '!=', '<>', '<', '>', '<=', '>=', 'LIKE', 'NOT LIKE', 'IN', 'NOT IN', 'IS', 'IS NOT'];
+        return in_array(strtoupper($operation), $allowedOperations);
+    }
 
     /**
      * function to fetch the second foreign key, specified in $relations array, from the middle table of a
@@ -729,7 +749,22 @@ class Model extends alpha
     public function build_where_query($column, $operation)
     {
         $table = function_exists("get_called_class")?get_called_class():__CLASS__;
-        return "SELECT * FROM {$table} WHERE {$table}.{$column} {$operation} ?;";
+        
+        // Validate column name to prevent SQL injection
+        if (!$this->validateColumnName($column)) {
+            throw new InvalidArgumentException("Invalid column name: " . $column);
+        }
+        
+        // Validate operation to prevent SQL injection
+        if (!$this->validateOperation($operation)) {
+            throw new InvalidArgumentException("Invalid operation: " . $operation);
+        }
+        
+        // Sanitize table name
+        $table = preg_replace('/[^a-zA-Z0-9_]/', '', $table);
+        $column = preg_replace('/[^a-zA-Z0-9_]/', '', $column);
+        
+        return "SELECT * FROM `{$table}` WHERE `{$table}`.`{$column}` {$operation} ?;";
     }
 
     /**
@@ -801,7 +836,8 @@ class Model extends alpha
     private function build_get_query()
     {
         $table = $this->get_instance_table_name();
-        return "SELECT * FROM {$table} WHERE {$table}.id = ?;";
+        $table = preg_replace('/[^a-zA-Z0-9_.]/', '', $table);
+        return "SELECT * FROM `{$table}` WHERE `{$table}`.`id` = ?;";
     }
 
 
@@ -812,7 +848,8 @@ class Model extends alpha
     private function build_get_all_query()
     {
         $table = $this->get_instance_table_name();
-        return "SELECT * FROM {$table};";
+        $table = preg_replace('/[^a-zA-Z0-9_.]/', '', $table);
+        return "SELECT * FROM `{$table}`;";
     }
 
 
@@ -843,7 +880,8 @@ class Model extends alpha
     private function build_delete_query()
     {
         $table = $this->get_instance_table_name();
-        return "DELETE FROM {$table} WHERE {$table}.id = ?;";
+        $table = preg_replace('/[^a-zA-Z0-9_.]/', '', $table);
+        return "DELETE FROM `{$table}` WHERE `{$table}`.`id` = ?;";
     }
 
 
